@@ -20,13 +20,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"zhenruyi.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":20,"offset":45},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":null,"post_header":null,"post_body":null,"coll_header":null,"sidebar":"fadeInDown"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
 
-    <meta property="og:type" content="article">
-<meta property="og:title" content="Web Server项目实战">
+    <meta name="description" content="内容有：BS和CS架构模式、IP和端口、网络模型、协议、字节序、IP操作函数、sockaddr数据结构、TCP和UDP简介、TCP通信流程、TCP实现服务器和客户端通信、TCP三次握手、TCP滑动窗口、TCP四次挥手、TCP通信并发、TCP状态转换、半关闭、端口复用、IO多路转接-select、poll、epoll、UDP通信、广播、组播、本地套接字。 实现Web Server的简易版本。 Git">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web Server简易项目">
 <meta property="og:url" content="https://zhenruyi.github.io/linux/webServer5/index.html">
 <meta property="og:site_name" content="zhenruyi">
+<meta property="og:description" content="内容有：BS和CS架构模式、IP和端口、网络模型、协议、字节序、IP操作函数、sockaddr数据结构、TCP和UDP简介、TCP通信流程、TCP实现服务器和客户端通信、TCP三次握手、TCP滑动窗口、TCP四次挥手、TCP通信并发、TCP状态转换、半关闭、端口复用、IO多路转接-select、poll、epoll、UDP通信、广播、组播、本地套接字。 实现Web Server的简易版本。 Git">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-04-25T01:53:11.000Z">
-<meta property="article:modified_time" content="2022-04-26T10:34:48.284Z">
+<meta property="article:modified_time" content="2022-04-29T04:34:22.091Z">
 <meta property="article:author" content="luyizheng">
 <meta property="article:tag" content="webServer">
 <meta name="twitter:card" content="summary">
@@ -36,10 +38,10 @@
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://zhenruyi.github.io/linux/webServer5/","path":"linux/webServer5/","title":"Web Server项目实战"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://zhenruyi.github.io/linux/webServer5/","path":"linux/webServer5/","title":"Web Server简易项目"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Web Server项目实战 | zhenruyi</title>
+<title>Web Server简易项目 | zhenruyi</title>
   
 
 
@@ -84,7 +86,7 @@
 
 
 <nav class="site-nav">
-  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">7</span></a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">16</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives<span class="badge">41</span></a></li>
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">7</span></a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">16</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives<span class="badge">40</span></a></li>
   </ul>
 </nav>
 
@@ -102,7 +104,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -115,6 +117,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%9F"><span class="nav-text">1 什么是网络服务器？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E7%94%A8%E6%88%B7%E5%A6%82%E4%BD%95%E4%B8%8E%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%80%9A%E4%BF%A1%EF%BC%9F"><span class="nav-text">2 用户如何与服务器通信？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%A6%82%E4%BD%95%E6%8E%A5%E5%8F%97%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%8F%91%E6%9D%A5%E7%9A%84HTTP%E8%AF%B7%E6%B1%82%EF%BC%9F"><span class="nav-text">3 服务器如何接受客户端发来的HTTP请求？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E4%BB%A5%E5%8F%8A%E5%93%8D%E5%BA%94%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87%EF%BC%9F"><span class="nav-text">4 服务器如何处理以及响应请求报文？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%98%AF%E5%A6%82%E4%BD%95%E8%BF%90%E8%A1%8C%E7%9A%84%EF%BC%9F"><span class="nav-text">5 线程池是如何运行的？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-%E4%BB%80%E4%B9%88%E6%98%AFCGI%E6%A0%A1%E9%AA%8C%EF%BC%9F"><span class="nav-text">6 什么是CGI校验？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-%E7%94%9F%E6%88%90HTTP%E5%93%8D%E5%BA%94%E5%B9%B6%E8%BF%94%E5%9B%9E%E7%BB%99%E7%94%A8%E6%88%B7"><span class="nav-text">7 生成HTTP响应并返回给用户</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8-%E4%BC%98%E5%8C%96%EF%BC%9A%E5%AE%9A%E6%97%B6%E5%99%A8%E5%A4%84%E7%90%86%E9%9D%9E%E6%B4%BB%E5%8A%A8%E9%93%BE%E6%8E%A5"><span class="nav-text">8 优化：定时器处理非活动链接</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9-%E4%BC%98%E5%8C%96%EF%BC%9A%E6%97%A5%E5%BF%97"><span class="nav-text">9 优化：日志</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10-%E5%8E%8B%E6%B5%8B"><span class="nav-text">10 压测</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -129,7 +132,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-count">40</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -234,12 +237,12 @@
     </span>
     
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="Web Server项目实战 | zhenruyi">
+      <meta itemprop="name" content="Web Server简易项目 | zhenruyi">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Web Server项目实战
+          Web Server简易项目
         </h1>
 
         <div class="post-meta-container">
@@ -260,7 +263,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2022-04-26 18:34:48" itemprop="dateModified" datetime="2022-04-26T18:34:48+08:00">2022-04-26</time>
+      <time title="Modified: 2022-04-29 12:34:22" itemprop="dateModified" datetime="2022-04-29T12:34:22+08:00">2022-04-29</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -282,7 +285,48 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        
+        <p>内容有：BS和CS架构模式、IP和端口、网络模型、协议、字节序、IP操作函数、sockaddr数据结构、TCP和UDP简介、TCP通信流程、TCP实现服务器和客户端通信、TCP三次握手、TCP滑动窗口、TCP四次挥手、TCP通信并发、TCP状态转换、半关闭、端口复用、IO多路转接-select、poll、epoll、UDP通信、广播、组播、本地套接字。</p>
+<p>实现Web Server的简易版本。</p>
+<p>Github：<a target="_blank" rel="noopener" href="https://github.com/zhenruyi/WebServerSimpleVersion">https://github.com/zhenruyi/WebServerSimpleVersion</a></p>
+<span id="more"></span>
+
+
+
+<hr>
+<h4 id="1-什么是网络服务器？"><a href="#1-什么是网络服务器？" class="headerlink" title="1 什么是网络服务器？"></a>1 什么是网络服务器？</h4><p>网络服务器是运行服务器软件的计算机，主要功能是通过HTTP/HTTPS协议与客户端，通常是一个浏览器，进行通信，来接收、存储、处理来自客户端的请求，并对请求做出响应，返回客户端请求的内容或者错误信息。</p>
+<hr>
+<h4 id="2-用户如何与服务器通信？"><a href="#2-用户如何与服务器通信？" class="headerlink" title="2 用户如何与服务器通信？"></a>2 用户如何与服务器通信？</h4><p>一般通过浏览器与服务器连接，在浏览器地址栏输入域名或IP地址和端口号，浏览器通过将你的域名解析，或者直接通过你的IP地址，向目标服务器发送一个请求。这个过程需要通过TCP协议的三次握手建立连接，然后HTTP协议生成针对目标服务器的请求报文，发送到目标服务器上。</p>
+<hr>
+<h4 id="3-服务器如何接受客户端发来的HTTP请求？"><a href="#3-服务器如何接受客户端发来的HTTP请求？" class="headerlink" title="3 服务器如何接受客户端发来的HTTP请求？"></a>3 服务器如何接受客户端发来的HTTP请求？</h4><p>服务器使用socket来监听请求。首先使用socket创建一个监听的文件描述符，然后将这个描述符bind一个端口，再使用listen监听。</p>
+<p>客户端会connect这个服务器的端口，然后服务器监听到了这些连接就会accept。由于用户连接请求时随机到达的异步请求，每次有新的连接进来了，都需要分配一个逻辑处理单元处理这个请求。服务器使用IO复用计数来实现对socket和客户请求的监听。IO复用虽然可以同时监听多个文件描述符，但其本身是阻塞的，当有多个文件描述符就绪的时候，程序只能按照顺序进行处理，所以为了提高效率，通过使用线程池来实现并发。</p>
+<p>服务器一般需要处理三件事情：IO事件、信号事件和定时器事件。有两种处理事件的方式：Reactor模式和Proactor模式。Reactor模式里主线程（IO处理单元）只负责监听，当有新的事件到来的时候，则将工作放入请求队列里面，交给子线程（逻辑单元）去做。Proactor模式里，主线程处理IO操作，而子线程处理逻辑操作，即主线程得到请求之后，将请求读取，然后交给子线程解析。</p>
+<p>通常使用同步IO模型来实现Reactor，使用异步IO来实现Proactor。同步IO就是执行代码的时候，CPU是高速执行的，但是遇到IO操作的时候，CPU就会等待IO操作完成，然后再进行操作。异步IO就是CPU遇到IO操作的时候，只发出指令，而不等待指令运行的结果，CPU会先去处理其他事件，当IO操作完成的时候，才得到返回的IO操作结果，再继续处理。</p>
+<p>Linux下IO复用有三种方式：select，poll，epoll。select和poll都是使用一个文件描述符列表存放要检测的文件描述符，select使用的是数组，poll使用的是链表，所以select只能检测文件描述符数组里成员的内容是否有变化，而poll可以指定检测文件描述符的事件（因为数组只能存放fd，而链表的一个结点不仅可以存放fd，还可以存放event）。使用select和poll之后，只会返回状态发生变化的文件描述符的数量，所以还需要遍历文件描述符表。epoll是使用一个队列和红黑树进行的，会返回具体的哪个文件描述符的状态发生变化。</p>
+<ul>
+<li>对于select和poll，文件描述符都是再用户态被加入文件描述符集合的，因为数组和链表都是存在栈空间里面，每次调用都需要将整个集合拷贝到内核态。epoll则将整个列表放到了内核态，但是每次添加都需要执行一次系统调用。系统调用的开销是很大的，而且在有很多短期活跃连接的情况下，epoll可能会慢于select和poll由于这些大量的系统调用开销。</li>
+<li>select和poll花费的时间都在对集合的遍历当中，当数组很大时，或者文件描述符状态变化不活跃时，效率很低。epoll花费的时间都在将新创建的文件描述符使用系统调用放到内核中，但是可以省去时间，所以当文件描述符集合很大的时候，使用epoll可以提高效率。</li>
+<li>select和poll都只能工作在相对低效的LT模式下，而epoll同时支持LT和ET模式。</li>
+</ul>
+<p>epoll的两种工作方式：LT电平触发和ET边缘触发。LT模式下，epoll_wait会以非阻塞的方式返回，若epoll事件没有处理完（没有返回EWOULDBLOCK），该事件还会被后续的epoll_wait触发。ET模式下，不管该事件有没有结束，只会返回一次。在ET模式中，一定要保证文件描述符是非阻塞的，并且调用read和write的时候，必须要等到返回EWOULDBLOCK，确保数据写完或读完。</p>
+<hr>
+<h4 id="4-服务器如何处理以及响应请求报文？"><a href="#4-服务器如何处理以及响应请求报文？" class="headerlink" title="4 服务器如何处理以及响应请求报文？"></a>4 服务器如何处理以及响应请求报文？</h4><p>使用accept获取到了用作通信的fd，将fd注册到内核事件表中，当这个fd传来报文的时候，epoll就会发现这个fd上有可读事件了，主线程就把这个fd上的请求读入缓冲中，然后将这个请求放入队列当中。操作工作队列一定要加锁，因为队列是所有线程共享的。使用信号量来表示队列的请求数。</p>
+<p>使用线程池的原因：请求的处理需要分配一个线程，每次开启一个线程会带来性能的开销，所以需要使用一个开一个线程池，服务器退出的时候再对线程进行回收。</p>
+<p>线程池线程数量的确定：对于CPU密集型的任务，线程的数量最好就是CPU核心的个数。对于IO密集型的任务，线程的数量最好是多于CPU核心的数量，因为线程竞争的是IO操作，IO操作很耗时，所以多一点线程可以提高CPU的利用率。</p>
+<p>GET和POST的区别：GET把参数包含在URL中，POST通过request body传递参数。GET请求参数会被完整保存在浏览器里，POST不会，因为POST的参数在数据包里。GET产生一个TCP数据包，浏览器会把头和数据一起发送过去，浏览器响应200。POST产生两个，先发送头，服务器响应100，然后再发送data，服务器响应200。</p>
+<hr>
+<h4 id="5-线程池是如何运行的？"><a href="#5-线程池是如何运行的？" class="headerlink" title="5 线程池是如何运行的？"></a>5 线程池是如何运行的？</h4><p>首先解析请求，然后按照请求，最后返回请求内容。</p>
+<hr>
+<h4 id="6-什么是CGI校验？"><a href="#6-什么是CGI校验？" class="headerlink" title="6 什么是CGI校验？"></a>6 什么是CGI校验？</h4><p>CGI（通用网关接口），它是一个运行在Web服务器上的程序，在编译的时候将相应的<code>.cpp</code>文件编程成<code>.cgi</code>文件并在主程序中调用即可（通过社长的<code>makefile</code>文件内容也可以看出）。这些CGI程序通常通过客户在其浏览器上点击一个<code>button</code>时运行。这些程序通常用来执行一些信息搜索、存储等任务，而且通常会生成一个动态的HTML网页来响应客户的HTTP请求。我们可以发现项目中的<code>sign.cpp</code>文件就是我们的CGI程序，将用户请求中的用户名和密码保存在一个<code>id_passwd.txt</code>文件中，通过将数据库中的用户名和密码存到一个<code>map</code>中用于校验。在主程序中通过<code>execl(m_real_file, &amp;flag, name, password, NULL);</code>这句命令来执行这个CGI文件，这里CGI程序仅用于校验，并未直接返回给用户响应。这个CGI程序的运行通过多进程来实现，根据其返回结果判断校验结果（使用<code>pipe</code>进行父子进程的通信，子进程将校验结果写到pipe的写端，父进程在读端读取）。</p>
+<hr>
+<h4 id="7-生成HTTP响应并返回给用户"><a href="#7-生成HTTP响应并返回给用户" class="headerlink" title="7 生成HTTP响应并返回给用户"></a>7 生成HTTP响应并返回给用户</h4><p>通过以上操作，我们已经对读到的请求做好了处理，然后也对目标文件的属性作了分析，若目标文件存在、对所有用户可读且不是目录时，则使用<code>mmap</code>将其映射到内存地址<code>m_file_address</code>处，并告诉调用者获取文件成功<code>FILE_REQUEST</code>。 接下来要做的就是根据读取结果对用户做出响应了，也就是到了<code>process_write(read_ret);</code>这一步，该函数根据<code>process_read()</code>的返回结果来判断应该返回给用户什么响应，我们最常见的就是<code>404</code>错误了，说明客户请求的文件不存在，除此之外还有其他类型的请求出错的响应，具体的可以去百度。然后呢，假设用户请求的文件存在，而且已经被<code>mmap</code>到<code>m_file_address</code>这里了，那么我们就将做如下写操作，将响应写到这个<code>connfd</code>的写缓存<code>m_write_buf</code>中去。</p>
+<h4 id="8-优化：定时器处理非活动链接"><a href="#8-优化：定时器处理非活动链接" class="headerlink" title="8 优化：定时器处理非活动链接"></a>8 优化：定时器处理非活动链接</h4><p>如果某一用户<code>connect()</code>到服务器之后，长时间不交换数据，一直占用服务器端的文件描述符，导致连接资源的浪费。这时候就应该利用定时器把这些超时的非活动连接释放掉，关闭其占用的文件描述符。这种情况也很常见，当你登录一个网站后长时间没有操作该网站的网页，再次访问的时候你会发现需要重新登录。</p>
+<hr>
+<h4 id="9-优化：日志"><a href="#9-优化：日志" class="headerlink" title="9 优化：日志"></a>9 优化：日志</h4><hr>
+<h4 id="10-压测"><a href="#10-压测" class="headerlink" title="10 压测"></a>10 压测</h4><p>用到了一个压测软件叫做Webbench。</p>
+<hr>
+<p><a target="_blank" rel="noopener" href="https://huixxi.github.io/2020/06/02/%E5%B0%8F%E7%99%BD%E8%A7%86%E8%A7%92%EF%BC%9A%E4%B8%80%E6%96%87%E8%AF%BB%E6%87%82%E7%A4%BE%E9%95%BF%E7%9A%84TinyWebServer/#more">小白视角：一文读懂社长的TinyWebServer | HU (huixxi.github.io)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/269247362">web服务器项目部分问题汇总 - 知乎 (zhihu.com)</a></p>
+
     </div>
 
     
@@ -303,9 +347,6 @@
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/other/cl2ibe7cw003cy4ssgqjdho2w/" rel="next" title="7">
-                  7 <i class="fa fa-chevron-right"></i>
-                </a>
             </div>
           </div>
     </footer>
