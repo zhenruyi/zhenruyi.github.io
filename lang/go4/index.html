@@ -30,7 +30,7 @@
 <meta property="og:image" content="https://zhenruyi.github.io/images/lang-go04Concurrency1.png">
 <meta property="og:image" content="https://zhenruyi.github.io/images/lang-go04Concurrency2.png">
 <meta property="article:published_time" content="2022-04-30T08:09:17.000Z">
-<meta property="article:modified_time" content="2022-05-01T06:05:54.265Z">
+<meta property="article:modified_time" content="2022-05-02T13:32:09.017Z">
 <meta property="article:author" content="luyizheng">
 <meta property="article:tag" content="go">
 <meta name="twitter:card" content="summary">
@@ -89,7 +89,7 @@
 
 
 <nav class="site-nav">
-  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">7</span></a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">16</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives<span class="badge">42</span></a></li>
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">7</span></a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">15</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives<span class="badge">42</span></a></li>
   </ul>
 </nav>
 
@@ -146,7 +146,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -266,7 +266,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2022-05-01 14:05:54" itemprop="dateModified" datetime="2022-05-01T14:05:54+08:00">2022-05-01</time>
+      <time title="Modified: 2022-05-02 21:32:09" itemprop="dateModified" datetime="2022-05-02T21:32:09+08:00">2022-05-02</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -477,6 +477,14 @@
 <p><img src="https://zhenruyi.github.io/images/lang-go04Concurrency2.png"></p>
 <hr>
 <h3 id="5-goroutine"><a href="#5-goroutine" class="headerlink" title="5 goroutine"></a>5 goroutine</h3><p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1gf4y1r79E?p=26">Goroutine基本模型和调度策略</a></p>
+<p>早期的操作系统是单进程的，一次只能执行一个进程，假如在这个过程中进程需要执行IO操作的话，就会阻塞，CPU利用率不高。</p>
+<p>然后有了多进程/多线程（在Linux中，线程也是一种进程）的概念，在一个时间段内实现并发。但是由于创建每一个进程都需要分配内存空间，而且需要系统调用，效率低。而线程之间可以共享资源，需要新建的东西少了，效率更高。频繁切换线程和进程也会有效率问题，因为切换需要保存上一个进程的信息，加载下一个进程的信息。进程/线程的数量越多，切换成本越大，越浪费（高消耗CPU）。多线程的竞争，需要锁，开发越来越复杂。</p>
+<p>对于一个线程，它的一部分在用户空间，一部分在内核空间，合起来就是一个线程的概念。这个时候能不能分开呢？因为CPU等硬件资源在内核空间，所以只看得到内核空间的部分，将这两个空间分开不影响程序运行。所以把在用户空间的部分叫做协程，在内核空间的部分叫做线程。</p>
+<p>既然两个部分不影响，能不能使用一个协程调度器，将一个线程对应多个协程（N：1），这个带来的问题是，当同一个协程调度器里的一个协程阻塞了，其他的协程就无法执行，因为线程只有一个。那就使用多个线程对应多个协程（N：M）。</p>
+<p>Golang对协程的处理：一个协程只有几KB的内存，可以灵活调度。</p>
+<p>Golang对早期调度器的处理十分糟糕，有一个全局的协程队列，然后有若干个线程对队列里的协程进行竞争执行，即对锁的争夺。缺点是激烈的锁竞争；如果创建一个子协程，会将子协程放入队列，但是往往希望同一个线程执行其子线程，这就为协程的转移造成延迟和额外的负载；CPU在线程之间的切换也造成了低效。</p>
+<p>后来的调度器有了GMP模型，从底层往上依次为多个硬件CPU核心，操作系统调度器，多个内核线程，线程争夺的是GOMAXPROCS个Processor处理器，每个P对应一个P的本地队列，队列里有多个协程，还有一个全局队列（上锁）。</p>
+<p>调度器的设计策略有复用线程，利用并行，抢占，全局G队列。复用线程有work stealing机制（当一个P里出现阻塞G的话，P队列里后面的G就没法执行了，其他的P就会将后面的G取过来执行），hand off机制（当一个P里出现一个G阻塞时，P将这个G脱离自己的队列，让他依附在M上，自己跑到别的M上执行）。利用并行就是规定GOMAXPROCS=CPU核数/2。抢占就是不再是排队，而是抢占式的，每个G最多执行10ms。全局G队列。</p>
 <h4 id="5-1-协程并发"><a href="#5-1-协程并发" class="headerlink" title="5.1 协程并发"></a>5.1 协程并发</h4><p>协程：coroutine。也叫轻量级线程。</p>
 <p>与传统的系统级线程和进程相比，协程最大的优势在于“轻量级”。可以轻松创建上万个而不会导致系统资源衰竭。而线程和进程通常很难超过1万个。这也是协程别称“轻量级线程”的原因。</p>
 <p>一个线程中可以有任意多个协程，但某一时刻只能有一个协程在运行，<strong>多个协程分享该线程分配到的计算机资源</strong>。</p>
