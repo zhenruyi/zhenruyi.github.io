@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon3/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon3/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon3/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon3/android-chrome-384x384.png" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" integrity="sha256-jTIdiMuX/e3DGJUGwl3pKSxuc6YOuqtJYkM0bGQESA4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"zhenruyi.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":20,"offset":45},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":null,"post_header":null,"post_body":null,"coll_header":null,"sidebar":"fadeInDown"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Golang垃圾回收机制：标记清理法、三色标记法、混合写屏障。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang垃圾回收机制">
+<meta property="og:url" content="https://zhenruyi.github.io/lang/go7/index.html">
+<meta property="og:site_name" content="zhenruyi">
+<meta property="og:description" content="Golang垃圾回收机制：标记清理法、三色标记法、混合写屏障。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-07-20T01:19:54.000Z">
+<meta property="article:modified_time" content="2022-07-20T06:36:19.832Z">
+<meta property="article:author" content="luyizheng">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://zhenruyi.github.io/lang/go7/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://zhenruyi.github.io/lang/go7/","path":"lang/go7/","title":"Golang垃圾回收机制"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Golang垃圾回收机制 | zhenruyi</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">zhenruyi</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">done is better than perfect</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories<span class="badge">7</span></a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">16</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives<span class="badge">46</span></a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%A0%87%E8%AE%B0-%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95"><span class="nav-text">一、标记-清除算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0%E6%B3%95"><span class="nav-text">二、三色标记法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%B2%A1%E6%9C%89STW%E7%9A%84%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0"><span class="nav-text">三、没有STW的三色标记</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%B1%8F%E9%9A%9C%E6%9C%BA%E5%88%B6"><span class="nav-text">四、屏障机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C%EF%BC%88hybrid-write-barrier%EF%BC%89"><span class="nav-text">五、混合写屏障（hybrid write barrier）</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="luyizheng"
+      src="/images/avatar2.jpg">
+  <p class="site-author-name" itemprop="name">luyizheng</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhenruyi" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhenruyi" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/jugenlu" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;jugenlu" rel="noopener" target="_blank"><i class="fab fa-google fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://m.weibo.cn/u/3017941811" title="Weibo → https:&#x2F;&#x2F;m.weibo.cn&#x2F;u&#x2F;3017941811" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:cs19b022@163.com" title="E-Mail → mailto:cs19b022@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/24837978" title="Bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;24837978" rel="noopener" target="_blank"><i class="fab fa-youtube fa-fw"></i>Bilibili</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://zhenruyi.github.io/images/OfficialAccountCode.jpg" title="WechatOfficial → https:&#x2F;&#x2F;zhenruyi.github.io&#x2F;images&#x2F;OfficialAccountCode.jpg"><i class="fab fa-weixin fa-fw"></i>WechatOfficial</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      they are very lovely
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://space.bilibili.com/672346917/" title="https:&#x2F;&#x2F;space.bilibili.com&#x2F;672346917&#x2F;" rel="noopener" target="_blank">AVA向晚</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://space.bilibili.com/672353429/" title="https:&#x2F;&#x2F;space.bilibili.com&#x2F;672353429&#x2F;" rel="noopener" target="_blank">Bella贝拉</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://space.bilibili.com/351609538/" title="https:&#x2F;&#x2F;space.bilibili.com&#x2F;351609538&#x2F;" rel="noopener" target="_blank">Carol珈乐</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://space.bilibili.com/672328094/" title="https:&#x2F;&#x2F;space.bilibili.com&#x2F;672328094&#x2F;" rel="noopener" target="_blank">Diana嘉然</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://space.bilibili.com/672342685/" title="https:&#x2F;&#x2F;space.bilibili.com&#x2F;672342685&#x2F;" rel="noopener" target="_blank">Eileen乃琳</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://zhenruyi.github.io/lang/go7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar2.jpg">
+      <meta itemprop="name" content="luyizheng">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhenruyi">
+      <meta itemprop="description" content="">
+    </span>
+    
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Golang垃圾回收机制 | zhenruyi">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Golang垃圾回收机制
+        </h1>
+
+        <div class="post-meta-container">
+
+        
+
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2022-07-20 09:19:54 / Modified: 14:36:19" itemprop="dateCreated datePublished" datetime="2022-07-20T09:19:54+08:00">2022-07-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/lang/" itemprop="url" rel="index"><span itemprop="name">lang</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>Golang垃圾回收机制：标记清理法、三色标记法、混合写屏障。</p>
+<span id="more"></span>
+
+
+
+<hr>
+<p>垃圾回收（Garbage Collection）是编程语言提供的自动内存管理机制，自动释放不需要的对象，让出内存资源。</p>
+<p>Golang的垃圾回收机制经历了很多次变革：</p>
+<ul>
+<li>Go V1.3 标记-清除（mark and sweep）算法；</li>
+<li>Go V1.5 三色标记法，STW；</li>
+<li>Go V1.5 屏障机制，强弱三色不变式，插入屏障、删除屏障；</li>
+<li>Go V1.8 混合写屏障。</li>
+</ul>
+<hr>
+<h2 id="一、标记-清除算法"><a href="#一、标记-清除算法" class="headerlink" title="一、标记-清除算法"></a>一、标记-清除算法</h2><p>标记清除算法分为两个阶段，第一个阶段是标记（mark phase），第二个阶段是清除阶段（sweep phase）。具体步骤是：</p>
+<ol>
+<li>暂停业务逻辑（Stop The World，STW），分类出可达和不可达的对象，做上标记。如果有其他对象或者程序使用的对象，则为可达的，没有其他对象使用的则是不可达的。</li>
+<li>从程序入口开始，依次将可达对象做上标记。</li>
+<li>清除没有标记的对象，停止暂停，让程序继续跑。</li>
+</ol>
+<p>执行标记清除算法的时候，需要执行STW，程序暂停，CPU不执行用户代码，全部用于垃圾回收，很耗时，而且程序会出现卡顿。</p>
+<p>算法过程干脆，但是有缺点：</p>
+<ul>
+<li>STW让程序暂停，出现卡顿（重要问题）；</li>
+<li>标记需要扫描整个heap；</li>
+<li>清除数据会产生heap碎片。</li>
+</ul>
+<p>V1.3之前，STW的暂停范围：启动STW -&gt; 标记 -&gt; 清除 -&gt; 停止STW，全部的GC时间都在STW的范围之内。V1.3的时候做了一个优化，STW的暂停范围：STW -&gt; 标记 -&gt; 停止STW。清除在停止STW之后，因为要清除的对象已经是不可达对象了，所以不会出现回收写冲突的问题。</p>
+<p>但是无论怎么优化，标记清除算法都会暂停整个程序。</p>
+<h2 id="二、三色标记法"><a href="#二、三色标记法" class="headerlink" title="二、三色标记法"></a>二、三色标记法</h2><p>三色标记法就是使用三个阶段来标记对象，具体过程：</p>
+<ol>
+<li>程序起初创建，全部标记为【白色】，每次新创建的对象，默认颜色都是【白色】。（程序有一个根节点集合，每个根节点都有指向不同的对象。）</li>
+<li>从根节点开始遍历所有的对象，遍历到的对象从【白色】变为【灰色】。遍历不是递归的形式，只遍历一层。第一次遍历是根节点的可达对象。</li>
+<li>第二次就把当前的灰色节点的可达对象从【白色】放入【灰色】，然后把当前【灰色】放入【黑色】。然后下一次又重复操作，知道所有【灰色】没有任何对象。</li>
+<li>回收所有【白色】对象，也就是回收垃圾。剩下的全部都是【黑色】对象。</li>
+</ol>
+<p>这里面可能会有很多并发流程均会被扫描，执行并发流程的内存可能相互依赖，为了在GC过程中保证数据的安全，我们在开始三色标记之前就会加上STW，在扫描确定黑白对象之后再放开STW。但是很明显这样的GC扫描的性能实在是太低了。</p>
+<p>那么Go是如何解决标记-清除(mark and sweep)算法中的卡顿(stw，stop the world)问题的呢？</p>
+<h2 id="三、没有STW的三色标记"><a href="#三、没有STW的三色标记" class="headerlink" title="三、没有STW的三色标记"></a>三、没有STW的三色标记</h2><p>假如没有STW，会发生什么？有两种情况，在三色标记法中，是不希望被发生的：</p>
+<ul>
+<li>白色对象被黑色对象引用（白色挂到黑色下）。</li>
+<li>灰色与他的可达白色对象的关系遭到破坏（灰色丢失白色）。</li>
+</ul>
+<p>如果这两种之一的情况发生，就会丢失对象。</p>
+<h2 id="四、屏障机制"><a href="#四、屏障机制" class="headerlink" title="四、屏障机制"></a>四、屏障机制</h2><p>让GC回收器满足以下两种情况之一，就可以保证对象不丢失：</p>
+<ul>
+<li>强三色不变式：强制不准黑色对象引用白色对象。</li>
+<li>弱三色不变式：被黑色引用的对象要处于灰色对象的保护下。</li>
+</ul>
+<p>为了遵循上述两个不变式，GC引进了两种屏障方式：</p>
+<ul>
+<li>插入屏障<ul>
+<li>被引用的对象会被标记为灰色；</li>
+<li>满足了强三色不变式。</li>
+<li>对象在内存槽有两种位置，栈和堆，栈空间容量小，但是要求响应速度快，所以插入屏障在栈空间对象操作中不使用。</li>
+<li>对于堆空间可以直接使用插入屏障，但是对于栈空间只能使用STW的方式。</li>
+</ul>
+</li>
+<li>删除屏障<ul>
+<li>被删除的对象，如果自身为白色，则标记为灰色。</li>
+<li>满足了弱三色不变式。</li>
+<li>回收精度低，对象被删除了，但是还是能在这一轮存活，下一轮才被删除。</li>
+</ul>
+</li>
+</ul>
+<h2 id="五、混合写屏障（hybrid-write-barrier）"><a href="#五、混合写屏障（hybrid-write-barrier）" class="headerlink" title="五、混合写屏障（hybrid write barrier）"></a>五、混合写屏障（hybrid write barrier）</h2><p>插入写屏障的短板：结束时需要STW来重新扫描栈。</p>
+<p>删除写屏障的短板：回收精度低，GC在开始时STW扫描堆栈来记录初始快照，这个过程会保护开始时刻的所有存货对象。</p>
+<p>混合写屏障结合了两者的优点，避免重新扫描的过程，减少了STW的时间。具体操作：</p>
+<ol>
+<li>将栈上的所有可达对象标记为黑色（不重复扫描，无需STW）；</li>
+<li>GC期间，任何栈上新创建的对象，均为黑色；</li>
+<li>被删除的对象标记为灰色；</li>
+<li>添加的对象标记为灰色。</li>
+</ol>
+<hr>
+<p>参考：<a target="_blank" rel="noopener" href="https://www.yuque.com/aceld/golang/zhzanb">Golang三色标记混合写屏障GC模式全分析</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/go/" rel="tag"># go</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/sci/dist2/" rel="prev" title="MIT 6.824 分布式系统基础学习(LEC 4-5)">
+                  <i class="fa fa-chevron-left"></i> MIT 6.824 分布式系统基础学习(LEC 4-5)
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/lang/go8/" rel="next" title="Golang的协程调度器设计思想">
+                  Golang的协程调度器设计思想 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">luyizheng</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js" integrity="sha256-j+yj56cdEY2CwkVtGyz18fNybFGpMGJ8JxG3GSyO2+I=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdn.jsdelivr.net/npm/pdfobject@2.2.7/pdfobject.min.js","integrity":"sha256-ph3Dk89VmuTVXG6x/RDzk53SU9LPdAh1tpv0UvnDZ2I="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
